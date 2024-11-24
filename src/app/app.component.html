@@ -1,0 +1,191 @@
+<div class="container-fluid vh-100 d-flex">
+  <!-- Left Section: JSON Input and Button -->
+  <div class="col-md-6 col-sm-12 p-4 bg-light">
+    <div class="card h-100 shadow-sm border-0">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Enter JSON to Generate Form</h5>
+      </div>
+      <div class="card-body">
+        <textarea
+          [(ngModel)]="jsonInput"
+          rows="15"
+          class="form-control shadow-sm"
+          placeholder="Paste your JSON here..."
+        ></textarea>
+        <button
+          (click)="generateForm()"
+          class="btn btn-primary btn-lg mt-3 w-100 shadow"
+        >
+          Generate Form
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Section: Dynamically Generated Form -->
+  <div class="col-md-6 col-sm-12 p-4 bg-white">
+    <div
+      *ngIf="formStructure && Object.keys(formStructure).length > 0"
+      class="h-100"
+    >
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">Fill Out the Generated Form</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="dynamicForm" (ngSubmit)="onSubmit()">
+            <!-- Loop Through Categories -->
+            <div
+              *ngFor="let category of Object.keys(formStructure)"
+              class="mb-4"
+            >
+              <h4 class="text-primary border-bottom pb-2 mb-3">
+                {{ category }}
+              </h4>
+              <div
+                *ngFor="let subCategory of Object.keys(formStructure[category])"
+              >
+                <!-- Subcategory Header -->
+                <h5
+                  *ngIf="subCategory !== 'General'"
+                  class="text-secondary mt-3 border-bottom pb-1"
+                >
+                  {{ subCategory }}
+                </h5>
+                <!-- Fields -->
+                <div
+                  *ngFor="let field of formStructure[category][subCategory]"
+                  class="mb-4"
+                >
+                  <label
+                    [for]="field.field_name"
+                    class="form-label fw-bold text-dark"
+                  >
+                    {{ field.title }}
+                    <span *ngIf="field.required" class="text-danger">*</span>
+                  </label>
+                  <ng-container [ngSwitch]="field.type">
+                    <!-- Textbox -->
+                    <input
+                      *ngSwitchCase="'TEXTBOX'"
+                      type="text"
+                      class="form-control shadow-sm"
+                      [formControlName]="field.field_name"
+                      [placeholder]="field.place_holder || ''"
+                    />
+
+                    <!-- Number -->
+                    <input
+                      *ngSwitchCase="'NUMBER'"
+                      type="number"
+                      class="form-control shadow-sm"
+                      [formControlName]="field.field_name"
+                      [placeholder]="field.place_holder || ''"
+                    />
+
+                    <!-- Radio Buttons -->
+                    <div *ngSwitchCase="'RADIOBUTTON'" class="form-check">
+                      <div
+                        *ngFor="let option of field.value_list"
+                        class="form-check form-check-inline"
+                      >
+                        <input
+                          class="form-check-input"
+                          type="radio"
+                          [formControlName]="field.field_name"
+                          [value]="option.name"
+                          id="{{ field.field_name }}_{{ option.name }}"
+                        />
+                        <label
+                          class="form-check-label text-dark"
+                          [for]="field.field_name + '_' + option.name"
+                        >
+                          {{ option.name }}
+                        </label>
+                      </div>
+                    </div>
+
+                    <!-- Date -->
+                    <input
+                      *ngSwitchCase="'DATE'"
+                      type="date"
+                      class="form-control shadow-sm"
+                      [formControlName]="field.field_name"
+                    />
+
+                    <!-- File Upload -->
+                    <input
+                      *ngSwitchCase="'FILE'"
+                      type="file"
+                      class="form-control shadow-sm"
+                      [formControlName]="field.field_name"
+                      (change)="onFileChange($event, field)"
+                    />
+
+                    <input
+                      *ngSwitchCase="'SIGNATURE'"
+                      type="file"
+                      class="form-control shadow-sm"
+                      [formControlName]="field.field_name"
+                      (change)="onFileChange($event, field.field_name)"
+                    />
+
+                    <!-- Toggle Button -->
+                    <div
+                      *ngSwitchCase="'TOGGLEBUTTON'"
+                      class="form-check form-switch"
+                    >
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="{{ field.field_name }}"
+                        [formControlName]="field.field_name"
+                      />
+                      <label
+                        class="form-check-label text-dark"
+                        [for]="field.field_name"
+                      >
+                        {{ field.title }}
+                      </label>
+                    </div>
+
+                    <!-- Dropdown -->
+                    <select
+                      *ngSwitchCase="'DROPDOWN'"
+                      class="form-select shadow-sm"
+                      [formControlName]="field.field_name"
+                    >
+                      <option
+                        value=""
+                        disabled
+                        [selected]="!field.default_value"
+                      >
+                        Select {{ field.title }}
+                      </option>
+                      <option
+                        *ngFor="let option of field.value_list"
+                        [value]="option.name"
+                      >
+                        {{ option.name }}
+                      </option>
+                    </select>
+                  </ng-container>
+                  <!-- Field Description -->
+                  <small *ngIf="field.description" class="form-text text-muted">
+                    <div [innerHTML]="field.description"></div>
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-end">
+              <button type="submit" class="btn btn-success btn-lg shadow">
+                Submit
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
